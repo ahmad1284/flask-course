@@ -1,3 +1,4 @@
+import os
 from flask import request
 from main import create_app
 from main.users import serializer
@@ -27,4 +28,6 @@ if __name__ == '__main__':
                     'response': "Your signature expired, login for another token"
                 }
 
-    app.run(debug=True)
+    #app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port = port)
