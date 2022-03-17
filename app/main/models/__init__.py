@@ -54,7 +54,7 @@ class GuidersSchema(ma.SQLAlchemyAutoSchema):
     # What is meta class?
     class Meta:
         guiders = Guiders
-        fields = ['name', 'location', 'charging_fee', 'phone']
+        fields = ['id','name', 'location', 'charging_fee', 'phone']
         load_instance = True
 
 #Serialize

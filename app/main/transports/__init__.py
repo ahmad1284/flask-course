@@ -80,6 +80,25 @@ class transport(Resource):
         }
 
     def delete(self):
+        transport_data = request.get_json()
+        if transport_data and transport_data.get('id'):
+            try:
+                _id = transport_data.get('id')
+                transport = Transports.query.filter_by(id=_id).first()
+                if not transport:
+                    return {
+                        'response': f"The Id {_id} does not exist"
+                    }
+                db.session.delete(transport)
+                db.session.commit()
+                return {
+                    'response' : f"Place with an ID of {_id} has been deleted"
+                }
+            except Exception as bug:
+                print(bug)
+                return {
+                    'response': f"Failed to delete place with ID of {_id}"
+                }
         return {
-            'response': 'This delete transport'
+            'response': '400 bad response'
         }

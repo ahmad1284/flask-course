@@ -46,11 +46,60 @@ class guider(Resource):
         }
 
     def put(self):
+        guider_update_data = request.get_json()
+        if guider_update_data and guider_update_data.get('id'):
+            _id = guider_update_data.get('id')
+            try:
+                target_guide = Guiders.query.filter_by(id=_id).first()
+                if not target_guide:
+                    return {
+                        'response':"Guider ID does not exist"
+                    }
+                if guider_update_data.get('name'):
+                    target_guide.name = guider_update_data.get('name')
+                
+                if guider_update_data.get('location'):
+                    target_guide.location = guider_update_data.get('location')
+                
+                if guider_update_data.get('charging_fee'):
+                    target_guide.charging_fee = guider_update_data.get('charging_fee')
+                
+                if guider_update_data.get('phone'):
+                    target_guide.phone = guider_update_data.get('phone')
+                    
+                db.session.add(target_guide)
+                db.session.commit()
+                return {
+                    'response':"guider update succesfully"
+                }
+            except Exception as bug:
+                print(bug)
+                return {
+                     'response': f'Failed updating guide data with ID {_id}',
+                     'error_msg': str(bug)
+                }
+        
         return {
-            'response': "This is put guider"
+            'response': "Please structure well update request"
         }
 
     def delete(self):
+        guider_data = request.get_json()
+        if guider_data and guider_data.get('id'):
+            try:
+                _id = guider_data.get('id')
+                guider = Guiders.query.filter_by(id=_id).first()
+                if not guider:
+                    return {
+                        'response': f"Guider with an Id of {_id} has been deleted"
+                    }
+                db.session.delete(guider)
+                db.session.commit()
+            except Exception as bug:
+                print(bug)
+                return {
+                    'response' : f"Failed to delete guider with ID of {_id}"
+                }
         return {
-            'response': 'This delete guiders'
+            'response': '400 bad request'
         }
