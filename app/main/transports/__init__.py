@@ -1,6 +1,7 @@
 from flask import Blueprint, request
-from main.models import db, Transports
-
+from main.models import db, ma, Transports, TransportSchema, STransportSchema
+from flask_restx import Resource, Api
+from marshmallow import ValidationError
 
 transport_bp = Blueprint(
     "transport_bp",
@@ -8,45 +9,46 @@ transport_bp = Blueprint(
     url_prefix='/'
 )
 
+transport_api = Api(transport_bp)
 
-@transport_bp.route('/register-transport', methods=['POST'])
-def register_transports():
-    transport_data = request.get_json()
-    try:
-        my_transport = Transports(
-            transport_type = transport_data.get('transport_type'),
-            rent_fee = transport_data.get('rent_fee'),
-            location = transport_data.get('location'),
-            phone = transport_data.get('phone')
-        )
-        db.session.add(my_transport)
-        db.session.commit()
+
+@transport_api.route('transports')
+class transport(Resource):
+
+    def get(self):
+        all_transports = Transports.query.all()
+        transport_schema = TransportSchema(many=True)
+        f_transports = transport_schema.dump(all_transports)
+        return f_transports
+
+    def post(self):
+        transport_data = request.get_json()
+        if transport_data:
+            try:
+                s_transport_schema = STransportSchema()
+                transport = s_transport_schema.load(transport_data)
+                db.session.add(transport)
+                db.session.commit()
+                return {
+                    'response': {
+                        'transport_id': transport.id,
+                        'message': "Transport registered succesfully"
+                    }
+                }
+            except ValidationError as bug:
+                print(bug)
+                return {
+                    "response": str(bug)
+                }
         return {
-            'response': {
-                'transport_id': my_transport.id,
-                'message' : "Transport registered succesfully"
-            }
+            'response': 'Transport data should not be empty'
         }
-    except Exception as bug:
-        print(bug)
+    def put(self):
         return {
-            "response" : "Transport registration failed"
+            'response': "This is put transport"
         }
 
-@transport_bp.route('/get-all-transports', methods=['GET'])
-def get_all_transports():
-    all_transports = Transports.query.all()
-    cleaned_transports = []
-    for _transport in all_transports:
-        transport_dict = {
-            "id" : _transport.id,
-            "location": _transport.location,
-            "rent_fee" : _transport.rent_fee,
-            "transport_type": _transport.transport_type,
-            "phone": _transport.phone,
-            "registered_on": _transport.date_created.isoformat()
+    def delete(self):
+        return {
+            'response': 'This delete transport'
         }
-        cleaned_transports.append(transport_dict)
-    return {
-        "Transports": cleaned_transports
-    }

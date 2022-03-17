@@ -1,6 +1,7 @@
 from flask import Blueprint, request
-from main.models import db, placesToVisit
+from main.models import db, ma, placesToVisit, PlacesSchema, SPlaceSchema
 from flask_restx import Resource, Api
+from marshmallow import ValidationError
 
 hosters_bp = Blueprint(
     "hosters_bp",
@@ -14,33 +15,19 @@ hosters_api = Api(hosters_bp)
 @hosters_api.route('hosters')
 class hosters(Resource):
     def get(self):
-        places_to_visits = placesToVisit.query.all()
-        f_places_to_visits = []
-        for place in places_to_visits:
-            place_json = {
-                "name": place.name,
-                "hoster_name": place.hoster_name,
-                "location": place.location,
-                "fee": place.fee,
-                "phone": place.phone,
-                "description": place.description,
-                "registered_on": place.date_created.isoformat()
-            }
-            f_places_to_visits.append(place_json)
-        return f_places_to_visits
+        all_places = placesToVisit.query.all()
+        places_schema = PlacesSchema(many=True)
+        f_places_to_visits = places_schema.dump(all_places)
+        return {
+            'PlacesToVisit': f_places_to_visits
+        }
 
     def post(self):
         hosters_data = request.get_json()
         if hosters_data:
             try:
-                places_to_visit = placesToVisit(
-                    name=hosters_data.get('name'),
-                    hoster_name=hosters_data.get('hoster_name'),
-                    location=hosters_data.get('location'),
-                    fee=hosters_data.get('fee'),
-                    phone=hosters_data.get('phone'),
-                    description=hosters_data.get('description')
-                )
+                s_places_schema = SPlaceSchema()
+                places_to_visit = s_places_schema.load(hosters_data)
 
                 db.session.add(places_to_visit)
                 db.session.commit()
@@ -49,10 +36,10 @@ class hosters(Resource):
                     'response': "Hoster added succesfully"
                 }
 
-            except Exception as bug:
+            except ValidationError as bug:
                 print(bug)
                 return {
-                    'response': "Failed adding place data"
+                    'response': str(bug)
                 }
         return {
             'response': "Failed adding place data"

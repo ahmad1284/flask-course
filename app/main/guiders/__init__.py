@@ -1,6 +1,7 @@
 from flask import Blueprint, request
-from main.models import db, Guiders
+from main.models import db, ma, Guiders, GuidersSchema, SGuidersSchema
 from flask_restx import Resource, Api
+from marshmallow import ValidationError
 
 guiders_bp = Blueprint(
     "guiders_bp",
@@ -15,40 +16,29 @@ guiders_api = Api(guiders_bp)
 class guider(Resource):
     def get(self):
         all_guiders = Guiders.query.all()
-        f_guiders = [] #filtered or converted to dict
-        for guider in all_guiders:
-            guider_json = {
-                "name" : guider.name,
-                "location": guider.location,
-                "charging_fee": guider.charging_fee,
-                "phone": guider.phone,
-                "description" : guider.description
-            }
-            f_guiders.append(guider_json)
+        guider_schema = GuidersSchema(many=True)
+        # deserialize obj to text?
+        f_guiders = guider_schema.dump(all_guiders)
         return f_guiders
+
     def post(self):
         guiders_data = request.get_json()
         if guiders_data:
             try:
-                guider = Guiders(
-                    name=guiders_data.get('name'),
-                    location=guiders_data.get('location'),
-                    charging_fee=guiders_data.get('charging_fee'),
-                    phone=guiders_data.get('phone'),
-                    description=guiders_data.get('description')
-                )
-
+                
+                s_guider_schema = SGuidersSchema()
+                guider = s_guider_schema.load(guiders_data)
                 db.session.add(guider)
                 db.session.commit()
 
                 return {
                     'response': "Guider added succesfully"
                 }
-                
-            except Exception as bug:
+
+            except ValidationError as bug:
                 print(bug)
                 return {
-                    'response': "Failed adding guider data"
+                    'response': str(bug)
                 }
 
         return {
