@@ -44,8 +44,39 @@ class transport(Resource):
             'response': 'Transport data should not be empty'
         }
     def put(self):
+        transport_update_data = request.get_json()
+        if transport_update_data and transport_update_data.get('id'):
+            _id = transport_update_data.get('id')
+            try:
+                target_transport = Transports.query.filter_by(id=_id).first()
+                if not target_transport:
+                    return {
+                        'response':"Transport ID does not exist"
+                    }
+                if transport_update_data.get('transport_type'):
+                    target_transport.transport_type = transport_update_data.get('transport_type')
+                    
+                if transport_update_data.get('rent_fee'):
+                    target_transport.rent_fee = transport_update_data.get('rent_fee')
+                    
+                if transport_update_data.get('location'):
+                    target_transport.location = transport_update_data.get('location')
+                
+                if transport_update_data.get('phone'):
+                    target_transport.phone = transport_update_data.get('phone')
+                    
+                db.session.add(target_transport)
+                db.session.commit()
+                return {
+                    'response':"Transport updated succesfully"
+                }
+            except Exception as bug:
+                print(bug)
+                return {
+                    'response': f'Failed updating Transport data with ID {_id}'
+                }
         return {
-            'response': "This is put transport"
+            'response': "Please structure well update request"
         }
 
     def delete(self):
